@@ -96,6 +96,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.head_ref }} # required for git-auto-commit-action because this is trigged by tag push and not branch push
       - name: Update tag in values.yaml
         run: yq -i '.image.tag = "${{ github.ref_name }}"' helm/go-web-app-chart/values.yaml
       - name: Commit Changes
