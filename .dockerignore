@@ -1,0 +1,5 @@
+*.md
+.gitignore
+Dockerfile
+LICENCE
+main_test.go
