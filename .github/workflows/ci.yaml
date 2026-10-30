@@ -87,3 +87,19 @@ jobs:
       with:
         push: true
         tags: ${{ steps.meta.outputs.tags }}
+
+  write-helm-values:
+    needs: release-docker-hub
+    permissions:
+      contents: write # to commit changes
+    name: Write HELM Chart values.yaml
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update tag in values.yaml
+        run: yq -i '.image.tag = "${{ github.ref_name }}"' helm/go-web-app-chart/values.yaml
+      - name: Commit Changes
+        uses: stefanzweifel/git-auto-commit-action@v7
+        with:
+          repository: helm/go-web-app-chart
+          file_pattern: "values.yaml"
+          commit_message: Update helm chart .image.tag
