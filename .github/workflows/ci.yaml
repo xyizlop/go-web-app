@@ -38,6 +38,8 @@ jobs:
     needs:
     - test
     - lint
+    permissions:
+      contents: write
     name: Build & Release on Github
     if: github.ref_type == 'tag'
     runs-on: ubuntu-latest
