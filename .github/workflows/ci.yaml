@@ -9,6 +9,8 @@ on:
       - "k8s/**"
       - "helm/**"
       - "scripts/**"
+    tags:
+      - "v*.*.*"
 
 jobs:
   test:
