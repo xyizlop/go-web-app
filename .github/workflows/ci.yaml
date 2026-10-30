@@ -33,6 +33,15 @@ jobs:
       - uses: golangci/golangci-lint-action@v9
         with:
           version: v2.15
+    
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Debug working directory
+        run: |
+          pwd
+          ls -la
+          find . -name values.yaml
 
   release:
     needs:
