@@ -101,6 +101,5 @@ jobs:
       - name: Commit Changes
         uses: stefanzweifel/git-auto-commit-action@v7
         with:
-          repository: helm/go-web-app-chart
-          file_pattern: "values.yaml"
+          file_pattern: "helm/go-web-app-chart/values.yaml"
           commit_message: Update helm chart .image.tag
