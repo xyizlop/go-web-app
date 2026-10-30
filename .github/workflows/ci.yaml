@@ -33,7 +33,11 @@ jobs:
           version: v2.15
 
   release:
+    needs:
+    - test
+    - lint
     name: Build & Release on Github
+    if: github.ref_type == 'tag'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -42,7 +46,6 @@ jobs:
           go-version: '1.27'
       - run: go build -o go-web-app
       - name: Release
-        if: github.ref_type == 'tag'
         uses: softprops/action-gh-release@v3
         with:
           files: go-web-app
