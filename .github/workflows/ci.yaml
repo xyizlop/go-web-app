@@ -88,7 +88,7 @@ jobs:
         push: true
         tags: ${{ steps.meta.outputs.tags }}
 
-  write-helm-values:
+  write-helm-values: # argocd will pick up then
     needs: release-docker-hub
     permissions:
       contents: write # to commit changes
