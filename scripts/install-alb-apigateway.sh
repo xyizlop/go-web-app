@@ -14,7 +14,7 @@ CLUSTER_CONFIG_FILE="${DIR}/${CLUSTER_CONFIG}"
 #####################
 CLUSTER_NAME=$(yq '.metadata.name' "$CLUSTER_CONFIG_FILE")
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-REGION="ap-south-1"
+CLUSTER_REGION=$(yq '.metadata.region' "$CLUSTER_CONFIG_FILE")
 SERVICE_ACCOUNT_NAME="aws-alb-svc-acc"
 AWS_ALB_POLICY="aws-alb-policy"
 AWS_ALB_ROLE="aws-alb-role"
@@ -94,7 +94,7 @@ fi
 #####################
 
 # set kubeconfig current context
-aws eks update-kubeconfig --region $REGION --name $CLUSTER_NAME
+aws eks update-kubeconfig --region $CLUSTER_REGION --name $CLUSTER_NAME
 
 # install gateway api crds
 print_with_seperator Installing K8s Gateway API CRDS
