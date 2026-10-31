@@ -21,7 +21,7 @@ spec:
   targetReference:
     group: ""
     kind: Service
-    name: argocd-server-exposed
+    name: argocd-server
   defaultConfiguration:
     protocol: HTTPS
     healthCheckConfig:
