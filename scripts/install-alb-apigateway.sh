@@ -12,9 +12,9 @@ CLUSTER_CONFIG_FILE="${DIR}/${CLUSTER_CONFIG}"
 #####################
 # AWS Related
 #####################
-CLUSTER_NAME=$(yq '.metadata.name' "$CLUSTER_CONFIG_FILE")
+CLUSTER_NAME=$(yq -r '.metadata.name' "$CLUSTER_CONFIG_FILE") # -r requires because without it yq returns double quoted output which is not valid for eksctl update-kubeconfig
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-CLUSTER_REGION=$(yq '.metadata.region' "$CLUSTER_CONFIG_FILE")
+CLUSTER_REGION=$(yq -r '.metadata.region' "$CLUSTER_CONFIG_FILE")
 SERVICE_ACCOUNT_NAME="aws-alb-svc-acc"
 AWS_ALB_POLICY="aws-alb-policy"
 AWS_ALB_ROLE="aws-alb-role"
@@ -94,7 +94,8 @@ fi
 #####################
 
 # set kubeconfig current context
-aws eks update-kubeconfig --region $CLUSTER_REGION --name $CLUSTER_NAME
+print_with_seperator Updating kubconfig
+aws eks update-kubeconfig --region "$CLUSTER_REGION" --name "$CLUSTER_NAME"
 
 # install gateway api crds
 print_with_seperator Installing K8s Gateway API CRDS
@@ -123,6 +124,7 @@ aws eks create-pod-identity-association \
 # install helm charts
 print_with_seperator Installing ALB Controller using HELM
 if install_alb_controller > /dev/null 2>&1; then
+    echo Verify Installation with 'helm list -n kube-system'...
     echo Installation Successfull! Happy Birthday!
 else
     echo Something Went Wrong...
