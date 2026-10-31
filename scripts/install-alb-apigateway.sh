@@ -14,6 +14,7 @@ CLUSTER_CONFIG_FILE="${DIR}/${CLUSTER_CONFIG}"
 #####################
 CLUSTER_NAME=$(yq '.metadata.name' "$CLUSTER_CONFIG_FILE")
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+REGION="ap-south-1"
 SERVICE_ACCOUNT_NAME="aws-alb-svc-acc"
 AWS_ALB_POLICY="aws-alb-policy"
 AWS_ALB_ROLE="aws-alb-role"
@@ -62,14 +63,13 @@ function create_alb_role {
 }
 
 function install_alb_controller {
-    # helm repo add eks https://aws.github.io/eks-charts
-    # helm repo update eks
-    # helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
-    # -n kube-system \
-    # --set clusterName=$CLUSTER_NAME \
-    # --set serviceAccount.create=false \
-    # --set serviceAccount.name=$SERVICE_ACCOUNT_NAME
-    echo hi
+    helm repo add eks https://aws.github.io/eks-charts
+    helm repo update eks
+    helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
+    -n kube-system \
+    --set clusterName=$CLUSTER_NAME \
+    --set serviceAccount.create=false \
+    --set serviceAccount.name=$SERVICE_ACCOUNT_NAME
 }
 
 #####################
@@ -85,8 +85,7 @@ print_with_seperator Checking "'$AWS_ALB_ROLE'" exists
 if alb_role_exists; then
     echo "Role for ALB Controller exists, skipping role creation..."
 else
-    echo "Role for ALB Controller doesn't exists, creating..."
-    create_alb_role
+    echo "Role for ALB Controller doesn't exists, creating..." && create_alb_role
 fi
 
 
@@ -94,29 +93,32 @@ fi
 # Installation
 #####################
 
+# set kubeconfig current context
+aws eks update-kubeconfig --region $REGION --name $CLUSTER_NAME
+
 # install gateway api crds
 print_with_seperator Installing K8s Gateway API CRDS
-# kubectl apply --server-side=true -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.0/standard-install.yaml
+kubectl apply --server-side=true -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.0/standard-install.yaml
 
 # install aws alb gateway api crds
 print_with_seperator Installing AWS ALB Gateway API CRDS
-# kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/refs/heads/main/config/crd/gateway/gateway-crds.yaml
+kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/refs/heads/main/config/crd/gateway/gateway-crds.yaml
 
 # create service account for alb controller
 print_with_seperator Creating ServiceAccount for ALB Controller
-# kubectl create serviceaccount $SERVICE_ACCOUNT_NAME -n kube-system
+kubectl create serviceaccount $SERVICE_ACCOUNT_NAME -n kube-system
 
 # install pod identity addon
 print_with_seperator Installing EKS Pod Identity Agent
-# aws eks create-addon --cluster-name $CLUSTER_NAME --addon-name eks-pod-identity-agent
+aws eks create-addon --cluster-name $CLUSTER_NAME --addon-name eks-pod-identity-agent
 
 # create pod identity association
 print_with_seperator Creating Pod Identity Association of ALB Role
-# aws eks create-pod-identity-association \
-#   --cluster-name $CLUSTER_NAME \
-#   --role-arn "arn:aws:iam::${AWS_ACCOUNT_ID}:role/${AWS_ALB_ROLE}" \
-#   --namespace kube-system \
-#   --service-account $SERVICE_ACCOUNT_NAME
+aws eks create-pod-identity-association \
+  --cluster-name $CLUSTER_NAME \
+  --role-arn "arn:aws:iam::${AWS_ACCOUNT_ID}:role/${AWS_ALB_ROLE}" \
+  --namespace kube-system \
+  --service-account $SERVICE_ACCOUNT_NAME
 
 # install helm charts
 print_with_seperator Installing ALB Controller using HELM
